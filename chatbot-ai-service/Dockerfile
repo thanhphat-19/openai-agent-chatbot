@@ -7,7 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app
 
 RUN apt-get update && apt-get install -y \
-    gcc \
+    gcc curl \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --upgrade pip uv
