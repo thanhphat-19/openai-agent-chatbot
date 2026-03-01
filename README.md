@@ -25,14 +25,7 @@ The streaming endpoint returns Server-Sent Events in the following format:
   event: message.completed
   data: {"status": "done"}
 ```
-
----
-
-## Request Flow
-
-![Request Flow Diagram](./request_flow.png)
-
-## Tech Stack
+### Tech Stack
 
 - FastAPI
 - OpenAI Agents SDK
@@ -40,6 +33,11 @@ The streaming endpoint returns Server-Sent Events in the following format:
 - SQLAlchemy + Alembic
 - Docker & Docker Compose
 - Pytest
+---
+
+## Request Flow
+
+![Request Flow Diagram](./request_flow.png)
 
 
 ## Prerequisites
@@ -209,5 +207,3 @@ If streaming fails midway (network drop, LLM provider error), should a partial a
 - **Cons:** If a user sees partial streamed text and the connection drops, that text won't appear in their history after reload.
 
 **Trade-off:** Choosing data integrity over UX consistency. Users lose partial responses on connection failure, but the system avoids incomplete state.
-
-
