@@ -12,6 +12,7 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+from sqlalchemy import text as sa_text
 from sqlalchemy.pool import NullPool
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
@@ -67,6 +68,9 @@ async def db_session(engine) -> AsyncGenerator[AsyncSession, None]:
     factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
     async with factory() as session:
         yield session
+        await session.execute(sa_text("DELETE FROM chat_messages"))
+        await session.execute(sa_text("DELETE FROM chat_sessions"))
+        await session.commit()
 
 
 @pytest_asyncio.fixture
