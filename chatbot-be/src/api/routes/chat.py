@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.clients.ai_service import ai_service_client
 from src.database import get_db
-from src.models.chat_message import ChatMessage
+from src.models.chat_message import ChatMessage, ChatRole
 from src.models.chat_session import ChatSession
 from src.schemas.chat import ChatStreamRequest
 
@@ -40,7 +40,7 @@ async def _upsert_session(
 
 
 async def _save_message(
-    session_id: uuid.UUID, role: str, content: str, db: AsyncSession
+    session_id: uuid.UUID, role: ChatRole, content: str, db: AsyncSession
 ) -> ChatMessage:
     """Persist a message to the database."""
     msg = ChatMessage(session_id=session_id, role=role, content=content)
@@ -50,15 +50,16 @@ async def _save_message(
     return msg
 
 
-async def _load_history(session_id: uuid.UUID, db: AsyncSession) -> list[dict]:
-    """Load all messages for a session ordered by created_at."""
+async def _load_history(session_id: uuid.UUID, user_id: str, db: AsyncSession) -> list[dict]:
+    """Load all messages for a session ordered by created_at, scoped to user."""
     result = await db.execute(
         select(ChatMessage)
-        .where(ChatMessage.session_id == session_id)
+        .join(ChatSession, ChatMessage.session_id == ChatSession.id)
+        .where(ChatMessage.session_id == session_id, ChatSession.user_id == user_id)
         .order_by(ChatMessage.created_at.asc())
     )
     messages = result.scalars().all()
-    return [{"role": msg.role, "content": msg.content} for msg in messages]
+    return [{"role": msg.role.value, "content": msg.content} for msg in messages]
 
 
 async def _proxy_sse_stream(
@@ -99,7 +100,7 @@ async def _proxy_sse_stream(
                     pass
 
         if complete_content:
-            await _save_message(session_id, "assistant", complete_content, db)
+            await _save_message(session_id, ChatRole.ASSISTANT, complete_content, db)
 
     except Exception as e:
         yield "event: agent.workflow.failed\n"
@@ -123,8 +124,8 @@ async def chat_stream(
     """
     session_id = request.session_id or uuid.uuid4()
     await _upsert_session(session_id, request.user_id, db)
-    await _save_message(session_id, "user", request.message, db)
-    history = await _load_history(session_id, db)
+    await _save_message(session_id, ChatRole.USER, request.message, db)
+    history = await _load_history(session_id, request.user_id, db)
 
     return StreamingResponse(
         _proxy_sse_stream(history, session_id, db),
