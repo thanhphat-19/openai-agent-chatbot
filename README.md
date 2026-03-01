@@ -16,6 +16,15 @@ An AI chat service built with the OpenAI Agents SDK, FastAPI, and PostgreSQL —
 
 - **`chatbot-be`** — public-facing API. Manages sessions and messages in PostgreSQL, proxies streaming to the AI service.
 - **`chatbot-ai-service`** — internal AI service. Stateless. Accepts message history, runs `Runner.run_streamed()`, emits SSE text deltas.
+  
+The streaming endpoint returns Server-Sent Events in the following format:
+```bash 
+  event: message.delta
+  data: {"content": "Paris"}
+
+  event: message.completed
+  data: {"status": "done"}
+```
 
 ---
 
@@ -160,16 +169,16 @@ alembic revision --autogenerate -m "describe_change"
 
 ## Design Choices & Trade-offs
 
-### 1. OpenAI Agents SDK over LangGraph
+### 1. Why OpenAI Agents SDK (instead of LangGraph)
 
-### OpenAI Agents SDK 
+#### OpenAI Agents SDK Advantages
 
 - **Simpler code** — less boilerplate than `StateGraph` + node definitions
 - **Built-in guardrails** — `InputGuardrail` / `OutputGuardrail` out of the box
 - **Native OpenAI integration** — best performance with OpenAI models
 - **Easier handoffs** — agent-to-agent delegation is a first-class concept
 
-### OpenAI Agents SDK vs LangGraph
+#### OpenAI Agents SDK Limitations
 
 - **Less deterministic routing** — LLM decides handoffs; edge cases harder to debug
 - **No explicit state typing** — LangGraph's `TypedDict` state is more structured
