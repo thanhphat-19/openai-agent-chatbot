@@ -1,0 +1,8 @@
+data/chroma/
+data/sample.db
+.env
+__pycache__/
+**/__pycache__/
+*.pyc
+.pytest_cache/
+tests/

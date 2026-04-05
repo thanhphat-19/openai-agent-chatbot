@@ -59,7 +59,7 @@ cp chatbot-ai-service/.env.example chatbot-ai-service/.env
 
 # chatbot-be
 cp chatbot-be/.env.example chatbot-be/.env
-# Edit chatbot-be/.env if needed (defaults already match docker-compose)
+# Edit chatbot-be/.env if needed
 ```
 
 ### 2. Start all services
